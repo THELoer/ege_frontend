@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import Button from "../components/Button";
-import Formula from "../components/Formula";
+import TaskStatement from "../components/TaskStatement";
 import { startDiagnostic, submitDiagnostic } from "../api/diagnostic";
 import type { DiagnosticTask, TaskType } from "../types/Task";
 
