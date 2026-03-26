@@ -82,7 +82,11 @@ export default function Diagnostic() {
               {typeTasks.map((task, i) => (
                 <div key={task.id} className="card">
                   <div className="text-sm text-slate-400 mb-2">Задача {i + 1}</div>
-                  <Formula value={task.condition} />
+                  <TaskStatement
+                    text={task.condition}
+                    imageUrl={task.imageUrl}
+                    contentOrder={task.contentOrder}
+                  />
                   <input
                     className="input mt-6"
                     placeholder="Введите ответ"

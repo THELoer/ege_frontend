@@ -4,12 +4,16 @@ export type TaskType =
   | "exponential"
   | "rational";
 
+export type TaskContentOrder = "image-first" | "text-first";
+
 export interface Task {
   id: string;
   number: number;
   type: TaskType;
   part: 1 | 2;
-  condition: string;
+  condition?: string;
+  imageUrl?: string;
+  contentOrder?: TaskContentOrder;
   answer?: string;
   solution?: string;
 }
