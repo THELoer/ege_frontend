@@ -37,6 +37,17 @@ export default function TasksAdmin() {
   const [status, setStatus] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
+<<<<<<< codex/implement-frontend-for-math-exam-site-mipl1c
+  const selectedUploadCatalog = useMemo(() => getCatalogItemByNumber(Number(uploadNumber)), [uploadNumber]);
+  const selectedCreateCatalog = useMemo(() => getCatalogItemByNumber(Number(createForm.number)), [createForm.number]);
+
+  const createTaskTypeLabel = useMemo(() => {
+    const subtypeLabel = selectedCreateCatalog.subtypes?.find((item) => item.value === createForm.type)?.label;
+    return subtypeLabel ?? selectedCreateCatalog.title;
+  }, [createForm.type, selectedCreateCatalog]);
+
+=======
+>>>>>>> master
   const canSubmitCreate = useMemo(() => {
     const hasText = createForm.text.trim().length > 0;
     const hasImage = createForm.imageUrl.trim().length > 0;
@@ -79,7 +90,15 @@ export default function TasksAdmin() {
 
       await createTaskApi(payload);
       setStatus("Задача успешно добавлена.");
+<<<<<<< codex/implement-frontend-for-math-exam-site-mipl1c
+      setCreateForm((prev) => ({
+        ...INITIAL_CREATE_FORM,
+        number: prev.number,
+        type: getDefaultTypeForNumber(Number(prev.number)),
+      }));
+=======
       setCreateForm(INITIAL_CREATE_FORM);
+>>>>>>> master
     } catch {
       setStatus("Ошибка при добавлении задачи.");
     } finally {
@@ -91,6 +110,42 @@ export default function TasksAdmin() {
     <div className="space-y-6">
       <Card>
         <h2 className="text-xl font-semibold mb-2">1) Массовая загрузка JSON</h2>
+<<<<<<< codex/implement-frontend-for-math-exam-site-mipl1c
+        <p className="text-slate-600 mb-6">Для 1-й части выберите номер задания и конкретный подтип из официального списка 1–12.</p>
+
+        <div className="grid sm:grid-cols-3 gap-4 mb-4">
+          <label className="space-y-2">
+            <span className="text-sm text-slate-500">Номер задания (1-12)</span>
+            <select
+              className="input"
+              value={uploadNumber}
+              onChange={(e) => {
+                const nextNumber = e.target.value;
+                setUploadNumber(nextNumber);
+                setUploadType(getDefaultTypeForNumber(Number(nextNumber)));
+              }}
+            >
+              {PART_ONE_TASK_CATALOG.map((item) => (
+                <option key={item.number} value={item.number}>
+                  {item.number}. {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm text-slate-500">Вид задания</span>
+            <select className="input" value={uploadType} onChange={(e) => setUploadType(e.target.value)}>
+              {selectedUploadCatalog.subtypes?.length ? (
+                selectedUploadCatalog.subtypes.map((subtype) => (
+                  <option key={subtype.value} value={subtype.value}>
+                    {subtype.label}
+                  </option>
+                ))
+              ) : (
+                <option value={getDefaultTypeForNumber(selectedUploadCatalog.number)}>{selectedUploadCatalog.title}</option>
+              )}
+=======
         <p className="text-slate-600 mb-6">Используйте, если добавляете много задач сразу из подготовленного файла.</p>
 
         <div className="grid sm:grid-cols-3 gap-4 mb-4">
@@ -107,6 +162,7 @@ export default function TasksAdmin() {
                   {type}
                 </option>
               ))}
+>>>>>>> master
             </select>
           </label>
 
@@ -125,17 +181,38 @@ export default function TasksAdmin() {
       <Card>
         <h2 className="text-xl font-semibold mb-2">2) Добавить задачу вручную</h2>
         <p className="text-slate-600 mb-6">
+<<<<<<< codex/implement-frontend-for-math-exam-site-mipl1c
+          Для задач 1-12: выберите номер, вид задачи, затем заполните текст/фото (можно только один блок), ответ обязателен.
+=======
           Для задач 1-12: можно добавить только текст, только фото или оба блока. Обязательно укажите ответ.
+>>>>>>> master
         </p>
 
         <div className="grid sm:grid-cols-3 gap-4 mb-4">
           <label className="space-y-2">
             <span className="text-sm text-slate-500">Номер задания</span>
+<<<<<<< codex/implement-frontend-for-math-exam-site-mipl1c
+            <select
+              className="input"
+              value={createForm.number}
+              onChange={(e) => {
+                const nextNumber = e.target.value;
+                setCreateForm((v) => ({ ...v, number: nextNumber, type: getDefaultTypeForNumber(Number(nextNumber)) }));
+              }}
+            >
+              {PART_ONE_TASK_CATALOG.map((item) => (
+                <option key={item.number} value={item.number}>
+                  {item.number}. {item.title}
+                </option>
+              ))}
+            </select>
+=======
             <input
               className="input"
               value={createForm.number}
               onChange={(e) => setCreateForm((v) => ({ ...v, number: e.target.value }))}
             />
+>>>>>>> master
           </label>
 
           <label className="space-y-2">
@@ -151,6 +228,23 @@ export default function TasksAdmin() {
           </label>
 
           <label className="space-y-2">
+<<<<<<< codex/implement-frontend-for-math-exam-site-mipl1c
+            <span className="text-sm text-slate-500">Вид задания</span>
+            <select
+              className="input"
+              value={createForm.type}
+              onChange={(e) => setCreateForm((v) => ({ ...v, type: e.target.value }))}
+            >
+              {selectedCreateCatalog.subtypes?.length ? (
+                selectedCreateCatalog.subtypes.map((subtype) => (
+                  <option key={subtype.value} value={subtype.value}>
+                    {subtype.label}
+                  </option>
+                ))
+              ) : (
+                <option value={getDefaultTypeForNumber(selectedCreateCatalog.number)}>{selectedCreateCatalog.title}</option>
+              )}
+=======
             <span className="text-sm text-slate-500">Тип</span>
             <select
               className="input"
@@ -162,10 +256,19 @@ export default function TasksAdmin() {
                   {type}
                 </option>
               ))}
+>>>>>>> master
             </select>
           </label>
         </div>
 
+<<<<<<< codex/implement-frontend-for-math-exam-site-mipl1c
+        <p className="text-xs text-slate-500 mb-4">
+          Раздел: <span className="font-medium text-slate-700">{selectedCreateCatalog.title}</span> · Подтип: {" "}
+          <span className="font-medium text-slate-700">{createTaskTypeLabel}</span>
+        </p>
+
+=======
+>>>>>>> master
         <label className="space-y-2 block mb-4">
           <span className="text-sm text-slate-500">Текст задачи (можно LaTeX для степеней/корней/логарифмов)</span>
           <textarea
