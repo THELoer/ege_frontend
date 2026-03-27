@@ -22,7 +22,7 @@ export default function Home() {
             </p>
 
             <Link
-              to={token ? "/tasks/13" : "/login"}
+              to={token ? "/tasks/1" : "/login"}
               className="inline-flex items-center justify-center rounded-xl bg-white px-8 py-4 text-lg font-semibold text-indigo-700 shadow-lg shadow-black/20 transition hover:scale-105 hover:bg-indigo-50"
             >
               🚀 {token ? "Перейти к заданиям" : "Создать аккаунт и начать"}
@@ -33,7 +33,7 @@ export default function Home() {
         <section>
           <h2 className="text-2xl font-bold mb-8">Номера заданий ЕГЭ</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            {[13, 14, 15, 16].map((n) => (
+            {Array.from({ length: 12 }, (_, idx) => idx + 1).map((n) => (
               <Link key={n} to={`/tasks/${n}`}>
                 <Card>
                   <div className="text-center text-2xl font-bold text-indigo-600">№{n}</div>

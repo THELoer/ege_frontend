@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Card from "../../components/Card";
 import Button from "../../components/Button";
 import TaskStatement from "../../components/TaskStatement";
@@ -12,24 +12,19 @@ import {
 
 interface CreateTaskForm {
   number: string;
-  part: "1" | "2";
   type: string;
   text: string;
-  imageUrl: string;
   contentOrder: TaskContentOrder;
   answer: string;
   solution: string;
 }
 
 const INITIAL_NUMBER = String(PART_ONE_TASK_CATALOG[0]?.number ?? 1);
-const DEFAULT_PART: "1" | "2" = "1";
 
 const INITIAL_CREATE_FORM: CreateTaskForm = {
   number: INITIAL_NUMBER,
-  part: DEFAULT_PART,
   type: getDefaultTypeForNumber(Number(INITIAL_NUMBER)),
   text: "",
-  imageUrl: "",
   contentOrder: "text-first",
   answer: "",
   solution: "",
@@ -38,18 +33,36 @@ const INITIAL_CREATE_FORM: CreateTaskForm = {
 export default function TasksAdmin() {
   const [uploadNumber, setUploadNumber] = useState(INITIAL_NUMBER);
   const [uploadType, setUploadType] = useState(getDefaultTypeForNumber(Number(INITIAL_NUMBER)));
-  const [uploadPart, setUploadPart] = useState<"1" | "2">(DEFAULT_PART);
   const [createForm, setCreateForm] = useState<CreateTaskForm>(INITIAL_CREATE_FORM);
+
+  const [taskImageFile, setTaskImageFile] = useState<File | null>(null);
+  const [answerImageFile, setAnswerImageFile] = useState<File | null>(null);
+  const [solutionImageFile, setSolutionImageFile] = useState<File | null>(null);
+
   const [status, setStatus] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   const selectedUploadCatalog = useMemo(() => getCatalogItemByNumber(Number(uploadNumber)), [uploadNumber]);
   const selectedCreateCatalog = useMemo(() => getCatalogItemByNumber(Number(createForm.number)), [createForm.number]);
 
+  const taskImagePreviewUrl = useMemo(
+    () => (taskImageFile ? URL.createObjectURL(taskImageFile) : ""),
+    [taskImageFile]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (taskImagePreviewUrl) {
+        URL.revokeObjectURL(taskImagePreviewUrl);
+      }
+    };
+  }, [taskImagePreviewUrl]);
+
   const createTaskTypeLabel = useMemo(() => {
     const subtypeLabel = selectedCreateCatalog.subtypes?.find((item) => item.value === createForm.type)?.label;
     return subtypeLabel ?? selectedCreateCatalog.title;
   }, [createForm.type, selectedCreateCatalog]);
+
   const uploadTypeOptions = useMemo(
     () =>
       selectedUploadCatalog.subtypes?.length
@@ -57,6 +70,7 @@ export default function TasksAdmin() {
         : [{ label: selectedUploadCatalog.title, value: getDefaultTypeForNumber(selectedUploadCatalog.number) }],
     [selectedUploadCatalog]
   );
+
   const createTypeOptions = useMemo(
     () =>
       selectedCreateCatalog.subtypes?.length
@@ -66,20 +80,20 @@ export default function TasksAdmin() {
   );
 
   const canSubmitCreate = useMemo(() => {
-    const hasText = createForm.text.trim().length > 0;
-    const hasImage = createForm.imageUrl.trim().length > 0;
-    return (hasText || hasImage) && createForm.answer.trim().length > 0;
-  }, [createForm]);
+    const hasTaskContent = createForm.text.trim().length > 0 || Boolean(taskImageFile);
+    const hasAnswerContent = createForm.answer.trim().length > 0 || Boolean(answerImageFile);
+    return hasTaskContent && hasAnswerContent;
+  }, [answerImageFile, createForm.answer, createForm.text, taskImageFile]);
 
   const upload = async (file: File) => {
     setPending(true);
     setStatus(null);
+
     try {
       await uploadTasksFile({
         file,
         number: uploadNumber,
         type: uploadType,
-        part: uploadPart,
       });
       setStatus("JSON-файл успешно загружен.");
     } catch {
@@ -94,25 +108,27 @@ export default function TasksAdmin() {
     setStatus(null);
 
     try {
-      const payload = {
+      await createTaskApi({
         number: Number(createForm.number),
-        part: Number(createForm.part),
         type: createForm.type,
         condition: createForm.text || null,
-        imageUrl: createForm.imageUrl || null,
         contentOrder: createForm.contentOrder,
-        answer: createForm.answer,
+        answer: createForm.answer || null,
         solution: createForm.solution || null,
-      };
+        taskImage: taskImageFile,
+        answerImage: answerImageFile,
+        solutionImage: solutionImageFile,
+      });
 
-      await createTaskApi(payload);
       setStatus("Задача успешно добавлена.");
       setCreateForm((prev) => ({
         ...INITIAL_CREATE_FORM,
         number: prev.number,
-        part: prev.part,
         type: getDefaultTypeForNumber(Number(prev.number)),
       }));
+      setTaskImageFile(null);
+      setAnswerImageFile(null);
+      setSolutionImageFile(null);
     } catch {
       setStatus("Ошибка при добавлении задачи.");
     } finally {
@@ -124,9 +140,9 @@ export default function TasksAdmin() {
     <div className="space-y-6">
       <Card>
         <h2 className="text-xl font-semibold mb-2">1) Массовая загрузка JSON</h2>
-        <p className="text-slate-600 mb-6">Для 1-й части выберите номер задания и конкретный подтип из официального списка 1–12.</p>
+        <p className="text-slate-600 mb-6">Выберите номер задания 1–12 и подкатегорию. Поле «часть» убрано.</p>
 
-        <div className="grid sm:grid-cols-3 gap-4 mb-4">
+        <div className="grid sm:grid-cols-2 gap-4 mb-4">
           <label className="space-y-2">
             <span className="text-sm text-slate-500">Номер задания (1-12)</span>
             <select
@@ -147,21 +163,13 @@ export default function TasksAdmin() {
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm text-slate-500">Вид задания</span>
+            <span className="text-sm text-slate-500">Подкатегория</span>
             <select className="input" value={uploadType} onChange={(e) => setUploadType(e.target.value)}>
               {uploadTypeOptions.map((subtype) => (
                 <option key={subtype.value} value={subtype.value}>
                   {subtype.label}
                 </option>
               ))}
-            </select>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm text-slate-500">Часть</span>
-            <select className="input" value={uploadPart} onChange={(e) => setUploadPart(e.target.value as "1" | "2")}>
-              <option value="1">1</option>
-              <option value="2">2</option>
             </select>
           </label>
         </div>
@@ -172,10 +180,10 @@ export default function TasksAdmin() {
       <Card>
         <h2 className="text-xl font-semibold mb-2">2) Добавить задачу вручную</h2>
         <p className="text-slate-600 mb-6">
-          Для задач 1-12: выберите номер, вид задачи, затем заполните текст/фото (можно только один блок), ответ обязателен.
+          Выбери номер задания и подкатегорию. Для условия, ответа и решения можно прикрепить изображения файлами.
         </p>
 
-        <div className="grid sm:grid-cols-3 gap-4 mb-4">
+        <div className="grid sm:grid-cols-2 gap-4 mb-4">
           <label className="space-y-2">
             <span className="text-sm text-slate-500">Номер задания</span>
             <select
@@ -195,19 +203,7 @@ export default function TasksAdmin() {
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm text-slate-500">Часть</span>
-            <select
-              className="input"
-              value={createForm.part}
-              onChange={(e) => setCreateForm((v) => ({ ...v, part: e.target.value as "1" | "2" }))}
-            >
-              <option value="1">1</option>
-              <option value="2">2</option>
-            </select>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm text-slate-500">Вид задания</span>
+            <span className="text-sm text-slate-500">Подкатегория</span>
             <select
               className="input"
               value={createForm.type}
@@ -223,12 +219,12 @@ export default function TasksAdmin() {
         </div>
 
         <p className="text-xs text-slate-500 mb-4">
-          Раздел: <span className="font-medium text-slate-700">{selectedCreateCatalog.title}</span> · Подтип: {" "}
+          Раздел: <span className="font-medium text-slate-700">{selectedCreateCatalog.title}</span> · Подтип:{" "}
           <span className="font-medium text-slate-700">{createTaskTypeLabel}</span>
         </p>
 
         <label className="space-y-2 block mb-4">
-          <span className="text-sm text-slate-500">Текст задачи (можно LaTeX для степеней/корней/логарифмов)</span>
+          <span className="text-sm text-slate-500">Текст задачи (опционально, можно LaTeX)</span>
           <textarea
             className="input min-h-28"
             placeholder="Например: \\log_2(x-1)=3"
@@ -238,12 +234,11 @@ export default function TasksAdmin() {
         </label>
 
         <label className="space-y-2 block mb-4">
-          <span className="text-sm text-slate-500">Ссылка на фото задачи</span>
+          <span className="text-sm text-slate-500">Картинка условия (опционально)</span>
           <input
-            className="input"
-            placeholder="https://..."
-            value={createForm.imageUrl}
-            onChange={(e) => setCreateForm((v) => ({ ...v, imageUrl: e.target.value }))}
+            type="file"
+            accept="image/*"
+            onChange={(e) => setTaskImageFile(e.target.files?.[0] ?? null)}
           />
         </label>
 
@@ -268,7 +263,7 @@ export default function TasksAdmin() {
         </div>
 
         <label className="space-y-2 block mb-4">
-          <span className="text-sm text-slate-500">Ответ (обязательно)</span>
+          <span className="text-sm text-slate-500">Ответ текстом (опционально, если прикрепляешь фото ответа)</span>
           <input
             className="input"
             value={createForm.answer}
@@ -276,12 +271,30 @@ export default function TasksAdmin() {
           />
         </label>
 
-        <label className="space-y-2 block mb-6">
-          <span className="text-sm text-slate-500">Решение (опционально)</span>
+        <label className="space-y-2 block mb-4">
+          <span className="text-sm text-slate-500">Картинка ответа (опционально)</span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setAnswerImageFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
+
+        <label className="space-y-2 block mb-4">
+          <span className="text-sm text-slate-500">Решение текстом (опционально)</span>
           <textarea
             className="input min-h-24"
             value={createForm.solution}
             onChange={(e) => setCreateForm((v) => ({ ...v, solution: e.target.value }))}
+          />
+        </label>
+
+        <label className="space-y-2 block mb-6">
+          <span className="text-sm text-slate-500">Картинка решения (опционально)</span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setSolutionImageFile(e.target.files?.[0] ?? null)}
           />
         </label>
 
@@ -292,11 +305,7 @@ export default function TasksAdmin() {
 
       <Card>
         <h3 className="font-semibold mb-3">Превью отображения задачи</h3>
-        <TaskStatement
-          text={createForm.text}
-          imageUrl={createForm.imageUrl}
-          contentOrder={createForm.contentOrder}
-        />
+        <TaskStatement text={createForm.text} imageUrl={taskImagePreviewUrl} contentOrder={createForm.contentOrder} />
       </Card>
 
       {status && <p className="text-sm text-slate-600">{status}</p>}
