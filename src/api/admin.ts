@@ -1,10 +1,11 @@
 import { api } from "./client";
-import type { TaskContentOrder } from "../types/Task";
+import type { TaskContentOrder, TaskType } from "../types/Task";
+
 
 export const uploadTasksFile = (data: {
   file: File;
   number: string;
-  type: string;
+  type: TaskType;
   part: "1" | "2";
 }) => {
   const formData = new FormData();
@@ -19,7 +20,7 @@ export const uploadTasksFile = (data: {
 export const createTask = (payload: {
   number: number;
   part: number;
-  type: string;
+  type: TaskType;
   condition: string | null;
   imageUrl: string | null;
   contentOrder: TaskContentOrder;
