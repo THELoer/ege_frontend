@@ -1,19 +1,31 @@
+import clsx from "clsx";
+
 export default function Button({
   children,
   onClick,
   variant = "primary",
+  type = "button",
+  disabled = false,
+  className,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   variant?: "primary" | "secondary";
+  type?: "button" | "submit";
+  disabled?: boolean;
+  className?: string;
 }) {
-  const styles =
-    variant === "primary"
-      ? "btn btn-primary"
-      : "btn btn-secondary";
-
   return (
-    <button onClick={onClick} className={styles}>
+    <button
+      type={type}
+      onClick={onClick}
+      disabled={disabled}
+      className={clsx(
+        "btn",
+        variant === "primary" ? "btn-primary" : "btn-secondary",
+        className
+      )}
+    >
       {children}
     </button>
   );
