@@ -1,10 +1,18 @@
 import { api } from "./client";
+<<<<<<< codex/implement-frontend-for-math-exam-site-mipl1c
 import type { TaskContentOrder } from "../types/Task";
+=======
+import type { TaskContentOrder, TaskType } from "../types/Task";
+>>>>>>> master
 
 export const uploadTasksFile = (data: {
   file: File;
   number: string;
+<<<<<<< codex/implement-frontend-for-math-exam-site-mipl1c
   type: string;
+=======
+  type: TaskType;
+>>>>>>> master
   part: "1" | "2";
 }) => {
   const formData = new FormData();
@@ -19,7 +27,11 @@ export const uploadTasksFile = (data: {
 export const createTask = (payload: {
   number: number;
   part: number;
+<<<<<<< codex/implement-frontend-for-math-exam-site-mipl1c
   type: string;
+=======
+  type: TaskType;
+>>>>>>> master
   condition: string | null;
   imageUrl: string | null;
   contentOrder: TaskContentOrder;
