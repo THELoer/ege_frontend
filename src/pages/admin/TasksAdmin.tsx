@@ -2,18 +2,15 @@ import { useMemo, useState } from "react";
 import Card from "../../components/Card";
 import Button from "../../components/Button";
 import TaskStatement from "../../components/TaskStatement";
-import type { TaskContentOrder } from "../../types/Task";
+import type { TaskContentOrder, TaskType } from "../../types/Task";
 import { createTask as createTaskApi, uploadTasksFile } from "../../api/admin";
-import {
-  PART_ONE_TASK_CATALOG,
-  getCatalogItemByNumber,
-  getDefaultTypeForNumber,
-} from "../../constants/taskCatalog";
+
+const TASK_TYPES: TaskType[] = ["logarithmic", "trigonometric", "exponential", "rational"];
 
 interface CreateTaskForm {
   number: string;
   part: "1" | "2";
-  type: string;
+  type: TaskType;
   text: string;
   imageUrl: string;
   contentOrder: TaskContentOrder;
@@ -21,13 +18,10 @@ interface CreateTaskForm {
   solution: string;
 }
 
-const INITIAL_NUMBER = String(PART_ONE_TASK_CATALOG[0]?.number ?? 1);
-const DEFAULT_PART: "1" | "2" = "1";
-
 const INITIAL_CREATE_FORM: CreateTaskForm = {
-  number: INITIAL_NUMBER,
-  part: DEFAULT_PART,
-  type: getDefaultTypeForNumber(Number(INITIAL_NUMBER)),
+  number: "1",
+  part: "1",
+  type: "logarithmic",
   text: "",
   imageUrl: "",
   contentOrder: "text-first",
@@ -36,9 +30,9 @@ const INITIAL_CREATE_FORM: CreateTaskForm = {
 };
 
 export default function TasksAdmin() {
-  const [uploadNumber, setUploadNumber] = useState(INITIAL_NUMBER);
-  const [uploadType, setUploadType] = useState(getDefaultTypeForNumber(Number(INITIAL_NUMBER)));
-  const [uploadPart, setUploadPart] = useState<"1" | "2">(DEFAULT_PART);
+  const [uploadNumber, setUploadNumber] = useState("13");
+  const [uploadType, setUploadType] = useState<TaskType>("logarithmic");
+  const [uploadPart, setUploadPart] = useState<"1" | "2">("1");
   const [createForm, setCreateForm] = useState<CreateTaskForm>(INITIAL_CREATE_FORM);
   const [status, setStatus] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -93,12 +87,7 @@ export default function TasksAdmin() {
 
       await createTaskApi(payload);
       setStatus("Задача успешно добавлена.");
-      setCreateForm((prev) => ({
-        ...INITIAL_CREATE_FORM,
-        number: prev.number,
-        part: prev.part,
-        type: getDefaultTypeForNumber(Number(prev.number)),
-      }));
+      setCreateForm(INITIAL_CREATE_FORM);
     } catch {
       setStatus("Ошибка при добавлении задачи.");
     } finally {
@@ -111,7 +100,6 @@ export default function TasksAdmin() {
       <Card>
         <h2 className="text-xl font-semibold mb-2">1) Массовая загрузка JSON</h2>
         <p className="text-slate-600 mb-6">Для 1-й части выберите номер задания и конкретный подтип из официального списка 1–12.</p>
-
         <div className="grid sm:grid-cols-3 gap-4 mb-4">
           <label className="space-y-2">
             <span className="text-sm text-slate-500">Номер задания (1-12)</span>
@@ -144,6 +132,23 @@ export default function TasksAdmin() {
               ) : (
                 <option value={getDefaultTypeForNumber(selectedUploadCatalog.number)}>{selectedUploadCatalog.title}</option>
               )}
+        <p className="text-slate-600 mb-6">Используйте, если добавляете много задач сразу из подготовленного файла.</p>
+
+        <div className="grid sm:grid-cols-3 gap-4 mb-4">
+          <label className="space-y-2">
+            <span className="text-sm text-slate-500">Номер задания</span>
+            <input className="input" value={uploadNumber} onChange={(e) => setUploadNumber(e.target.value)} />
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm text-slate-500">Тип</span>
+            <select className="input" value={uploadType} onChange={(e) => setUploadType(e.target.value as TaskType)}>
+              {TASK_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+
             </select>
           </label>
 
@@ -162,7 +167,7 @@ export default function TasksAdmin() {
       <Card>
         <h2 className="text-xl font-semibold mb-2">2) Добавить задачу вручную</h2>
         <p className="text-slate-600 mb-6">
-          Для задач 1-12: выберите номер, вид задачи, затем заполните текст/фото (можно только один блок), ответ обязателен.
+          Для задач 1-12: можно добавить только текст, только фото или оба блока. Обязательно укажите ответ.
         </p>
 
         <div className="grid sm:grid-cols-3 gap-4 mb-4">
@@ -182,6 +187,11 @@ export default function TasksAdmin() {
                 </option>
               ))}
             </select>
+            <input
+              className="input"
+              value={createForm.number}
+              onChange={(e) => setCreateForm((v) => ({ ...v, number: e.target.value }))}
+            />
           </label>
 
           <label className="space-y-2">
@@ -212,10 +222,20 @@ export default function TasksAdmin() {
               ) : (
                 <option value={getDefaultTypeForNumber(selectedCreateCatalog.number)}>{selectedCreateCatalog.title}</option>
               )}
+            <span className="text-sm text-slate-500">Тип</span>
+            <select
+              className="input"
+              value={createForm.type}
+              onChange={(e) => setCreateForm((v) => ({ ...v, type: e.target.value as TaskType }))}
+            >
+              {TASK_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
             </select>
           </label>
         </div>
-
         <p className="text-xs text-slate-500 mb-4">
           Раздел: <span className="font-medium text-slate-700">{selectedCreateCatalog.title}</span> · Подтип: {" "}
           <span className="font-medium text-slate-700">{createTaskTypeLabel}</span>
