@@ -1,19 +1,6 @@
 import { api } from "./client";
 import type { TaskContentOrder } from "../types/Task";
 
-export const uploadTasksFile = (data: {
-  file: File;
-  number: string;
-  type: string;
-}) => {
-  const formData = new FormData();
-  formData.append("file", data.file);
-  formData.append("number", data.number);
-  formData.append("type", data.type);
-
-  return api.post("/admin/tasks/upload", formData);
-};
-
 export const createTask = (payload: {
   number: number;
   type: string;

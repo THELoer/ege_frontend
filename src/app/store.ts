@@ -12,6 +12,7 @@ interface AuthState {
     email: string;
     name?: string;
   }) => void;
+  setProfile: (payload: { email: string; name?: string }) => void;
   logout: () => void;
 }
 
@@ -24,6 +25,7 @@ export const useAuth = create<AuthState>()(
       name: null,
       setAuth: ({ token, role, email, name }) =>
         set({ token, role, email, name: name ?? null }),
+      setProfile: ({ email, name }) => set({ email, name: name ?? null }),
       logout: () =>
         set({ token: null, role: null, email: null, name: null }),
     }),

@@ -5,10 +5,8 @@
 2. Убедитесь, что `VITE_API_URL` указывает на ваш backend (по умолчанию `http://localhost:8080/api`).
 3. Запустите фронтенд: `npm run dev`.
 
-## Что реализовать в backend для текущего админ-upload
-### 1) Эндпоинты
-- `POST /api/admin/tasks/upload` — `multipart/form-data`:
-  - `file` (json), `number`, `type`.
+## Что реализовать в backend для текущей админ-панели
+### 1) Эндпоинт
 - `POST /api/admin/tasks` — `multipart/form-data`:
   - `number`, `type`, `contentOrder`,
   - опционально `condition`, `answer`, `solution`,
@@ -21,10 +19,6 @@
   - `answer_text` (text, nullable), `answer_image_path` (text, nullable),
   - `solution_text` (text, nullable), `solution_image_path` (text, nullable),
   - `created_by` (fk users), `created_at`, `updated_at`.
-- `task_imports`
-  - `id`, `admin_id`, `number`, `type`, `imported_count`, `failed_count`, `created_at`.
-- `task_import_errors`
-  - `id`, `import_id`, `row_index`, `message`.
 
 ### 3) Хранение файлов
 - Сохраняйте картинки в локальное хранилище (`uploads/tasks/...`) или S3/MinIO.

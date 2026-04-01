@@ -3,7 +3,7 @@ import Card from "../../components/Card";
 import Button from "../../components/Button";
 import TaskStatement from "../../components/TaskStatement";
 import type { TaskContentOrder } from "../../types/Task";
-import { createTask as createTaskApi, uploadTasksFile } from "../../api/admin";
+import { createTask as createTaskApi } from "../../api/admin";
 import {
   PART_ONE_TASK_CATALOG,
   getCatalogItemByNumber,
@@ -31,18 +31,13 @@ const INITIAL_CREATE_FORM: CreateTaskForm = {
 };
 
 export default function TasksAdmin() {
-  const [uploadNumber, setUploadNumber] = useState(INITIAL_NUMBER);
-  const [uploadType, setUploadType] = useState(getDefaultTypeForNumber(Number(INITIAL_NUMBER)));
   const [createForm, setCreateForm] = useState<CreateTaskForm>(INITIAL_CREATE_FORM);
-
   const [taskImageFile, setTaskImageFile] = useState<File | null>(null);
   const [answerImageFile, setAnswerImageFile] = useState<File | null>(null);
   const [solutionImageFile, setSolutionImageFile] = useState<File | null>(null);
-
   const [status, setStatus] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  const selectedUploadCatalog = useMemo(() => getCatalogItemByNumber(Number(uploadNumber)), [uploadNumber]);
   const selectedCreateCatalog = useMemo(() => getCatalogItemByNumber(Number(createForm.number)), [createForm.number]);
 
   const taskImagePreviewUrl = useMemo(
@@ -63,14 +58,6 @@ export default function TasksAdmin() {
     return subtypeLabel ?? selectedCreateCatalog.title;
   }, [createForm.type, selectedCreateCatalog]);
 
-  const uploadTypeOptions = useMemo(
-    () =>
-      selectedUploadCatalog.subtypes?.length
-        ? selectedUploadCatalog.subtypes
-        : [{ label: selectedUploadCatalog.title, value: getDefaultTypeForNumber(selectedUploadCatalog.number) }],
-    [selectedUploadCatalog]
-  );
-
   const createTypeOptions = useMemo(
     () =>
       selectedCreateCatalog.subtypes?.length
@@ -84,24 +71,6 @@ export default function TasksAdmin() {
     const hasAnswerContent = createForm.answer.trim().length > 0 || Boolean(answerImageFile);
     return hasTaskContent && hasAnswerContent;
   }, [answerImageFile, createForm.answer, createForm.text, taskImageFile]);
-
-  const upload = async (file: File) => {
-    setPending(true);
-    setStatus(null);
-
-    try {
-      await uploadTasksFile({
-        file,
-        number: uploadNumber,
-        type: uploadType,
-      });
-      setStatus("JSON-файл успешно загружен.");
-    } catch {
-      setStatus("Ошибка загрузки JSON-файла.");
-    } finally {
-      setPending(false);
-    }
-  };
 
   const createTask = async () => {
     setPending(true);
@@ -139,48 +108,9 @@ export default function TasksAdmin() {
   return (
     <div className="space-y-6">
       <Card>
-        <h2 className="text-xl font-semibold mb-2">1) Массовая загрузка JSON</h2>
-        <p className="text-slate-600 mb-6">Выберите номер задания 1–12 и подкатегорию. Поле «часть» убрано.</p>
-
-        <div className="grid sm:grid-cols-2 gap-4 mb-4">
-          <label className="space-y-2">
-            <span className="text-sm text-slate-500">Номер задания (1-12)</span>
-            <select
-              className="input"
-              value={uploadNumber}
-              onChange={(e) => {
-                const nextNumber = e.target.value;
-                setUploadNumber(nextNumber);
-                setUploadType(getDefaultTypeForNumber(Number(nextNumber)));
-              }}
-            >
-              {PART_ONE_TASK_CATALOG.map((item) => (
-                <option key={item.number} value={item.number}>
-                  {item.number}. {item.title}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm text-slate-500">Подкатегория</span>
-            <select className="input" value={uploadType} onChange={(e) => setUploadType(e.target.value)}>
-              {uploadTypeOptions.map((subtype) => (
-                <option key={subtype.value} value={subtype.value}>
-                  {subtype.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <input type="file" accept=".json" onChange={(e) => e.target.files && upload(e.target.files[0])} />
-      </Card>
-
-      <Card>
-        <h2 className="text-xl font-semibold mb-2">2) Добавить задачу вручную</h2>
+        <h2 className="text-xl font-semibold mb-2">Добавить задачу вручную</h2>
         <p className="text-slate-600 mb-6">
-          Выбери номер задания и подкатегорию. Для условия, ответа и решения можно прикрепить изображения файлами.
+          Массовая загрузка удалена. Добавляй задачу вручную: выбери номер, подкатегорию и прикрепи изображения файлами.
         </p>
 
         <div className="grid sm:grid-cols-2 gap-4 mb-4">
@@ -235,11 +165,7 @@ export default function TasksAdmin() {
 
         <label className="space-y-2 block mb-4">
           <span className="text-sm text-slate-500">Картинка условия (опционально)</span>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setTaskImageFile(e.target.files?.[0] ?? null)}
-          />
+          <input type="file" accept="image/*" onChange={(e) => setTaskImageFile(e.target.files?.[0] ?? null)} />
         </label>
 
         <div className="mb-4">
@@ -273,11 +199,7 @@ export default function TasksAdmin() {
 
         <label className="space-y-2 block mb-4">
           <span className="text-sm text-slate-500">Картинка ответа (опционально)</span>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setAnswerImageFile(e.target.files?.[0] ?? null)}
-          />
+          <input type="file" accept="image/*" onChange={(e) => setAnswerImageFile(e.target.files?.[0] ?? null)} />
         </label>
 
         <label className="space-y-2 block mb-4">
@@ -291,11 +213,7 @@ export default function TasksAdmin() {
 
         <label className="space-y-2 block mb-6">
           <span className="text-sm text-slate-500">Картинка решения (опционально)</span>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => setSolutionImageFile(e.target.files?.[0] ?? null)}
-          />
+          <input type="file" accept="image/*" onChange={(e) => setSolutionImageFile(e.target.files?.[0] ?? null)} />
         </label>
 
         <Button disabled={!canSubmitCreate || pending} onClick={createTask}>
