@@ -149,6 +149,30 @@ export default function TasksAdmin() {
     }
   };
 
+  const handleCreateCheat = async () => {
+    setPending(true);
+    setStatus(null);
+
+    try {
+      await createCheatSheet({
+        number: Number(cheatForm.number),
+        title: cheatForm.title,
+        content: cheatForm.content || null,
+        image: cheatImageFile,
+      });
+
+      setStatus("Шпаргалка успешно добавлена.");
+      setCheatForm((prev) => ({ ...INITIAL_CHEAT_FORM, number: prev.number }));
+      setCheatImageFile(null);
+    } catch {
+      setStatus("Ошибка при добавлении шпаргалки.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const totalPages = Math.max(1, Math.ceil(catalogTotal / PAGE_SIZE));
+
   return (
     <div className="space-y-6">
       <Card>
