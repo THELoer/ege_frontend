@@ -12,6 +12,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 import Profile from "../pages/Profile";
 import Catalog from "../pages/Catalog";
 import TestingMenu from "../pages/TestingMenu";
+import ErrorPractice from "../pages/ErrorPractice";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Home /> },
@@ -72,6 +73,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <TestingMenu />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/tasks/:number/practice-errors",
+    element: (
+      <ProtectedRoute>
+        <ErrorPractice />
       </ProtectedRoute>
     ),
   },

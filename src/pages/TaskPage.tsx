@@ -28,14 +28,6 @@ export default function TaskPage() {
             <Button variant="secondary">Режим экзамена</Button>
           </Link>
 
-          <Link to={`/tasks/${number}/exam`}>
-            <Button variant="secondary">Режим экзамена</Button>
-          </Link>
-
-          <Link to={`/tasks/${number}/testing`}>
-            <Button variant="secondary">Меню тестирования</Button>
-          </Link>
-
           <Link to={`/tasks/${number}/testing`}>
             <Button variant="secondary">Меню тестирования</Button>
           </Link>
