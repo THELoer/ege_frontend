@@ -12,7 +12,7 @@ export default function TaskPage() {
         <h1 className="text-2xl font-bold mb-2">Задание №{number}</h1>
 
         <p className="text-gray-600 mb-6">
-          1) Пройдите диагностику (3 задачи каждого типа) 2) изучите разбор слабых тем 3) закрепите в тренировке.
+          Выбери режим: диагностика, обучение с материалами из backend или меню тестирования.
         </p>
 
         <div className="flex flex-wrap gap-4">
@@ -30,6 +30,10 @@ export default function TaskPage() {
 
           <Link to={`/tasks/${number}/exam`}>
             <Button variant="secondary">Режим экзамена</Button>
+          </Link>
+
+          <Link to={`/tasks/${number}/testing`}>
+            <Button variant="secondary">Меню тестирования</Button>
           </Link>
         </div>
       </Card>

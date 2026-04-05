@@ -3,7 +3,7 @@ import Card from "../../components/Card";
 import Button from "../../components/Button";
 import TaskStatement from "../../components/TaskStatement";
 import type { TaskContentOrder } from "../../types/Task";
-import { createTask as createTaskApi, listTasks, type AdminTaskListItem } from "../../api/admin";
+import { createTask as createTaskApi } from "../../api/admin";
 import { createCheatSheet } from "../../api/study";
 import {
   PART_ONE_TASK_CATALOG,
@@ -27,7 +27,6 @@ interface CheatSheetForm {
 }
 
 const INITIAL_NUMBER = String(PART_ONE_TASK_CATALOG[0]?.number ?? 1);
-const PAGE_SIZE = 10;
 
 const INITIAL_CREATE_FORM: CreateTaskForm = {
   number: INITIAL_NUMBER,
@@ -44,11 +43,6 @@ const INITIAL_CHEAT_FORM: CheatSheetForm = {
   content: "",
 };
 
-const getTypeLabel = (number: number, type: string) => {
-  const catalogItem = getCatalogItemByNumber(number);
-  return catalogItem.subtypes?.find((sub) => sub.value === type)?.label ?? type;
-};
-
 export default function TasksAdmin() {
   const [createForm, setCreateForm] = useState<CreateTaskForm>(INITIAL_CREATE_FORM);
   const [taskImageFile, setTaskImageFile] = useState<File | null>(null);
@@ -61,16 +55,7 @@ export default function TasksAdmin() {
   const [status, setStatus] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
-  const [catalogNumber, setCatalogNumber] = useState(INITIAL_NUMBER);
-  const [catalogType, setCatalogType] = useState(getDefaultTypeForNumber(Number(INITIAL_NUMBER)));
-  const [catalogPage, setCatalogPage] = useState(1);
-  const [catalogLoading, setCatalogLoading] = useState(false);
-  const [catalogError, setCatalogError] = useState<string | null>(null);
-  const [catalogItems, setCatalogItems] = useState<AdminTaskListItem[]>([]);
-  const [catalogTotal, setCatalogTotal] = useState(0);
-
   const selectedCreateCatalog = useMemo(() => getCatalogItemByNumber(Number(createForm.number)), [createForm.number]);
-  const selectedCatalogFilter = useMemo(() => getCatalogItemByNumber(Number(catalogNumber)), [catalogNumber]);
 
   const taskImagePreviewUrl = useMemo(
     () => (taskImageFile ? URL.createObjectURL(taskImageFile) : ""),
@@ -98,14 +83,6 @@ export default function TasksAdmin() {
     [selectedCreateCatalog]
   );
 
-  const catalogTypeOptions = useMemo(
-    () =>
-      selectedCatalogFilter.subtypes?.length
-        ? selectedCatalogFilter.subtypes
-        : [{ label: selectedCatalogFilter.title, value: getDefaultTypeForNumber(selectedCatalogFilter.number) }],
-    [selectedCatalogFilter]
-  );
-
   const canSubmitCreate = useMemo(() => {
     const hasTaskContent = createForm.text.trim().length > 0 || Boolean(taskImageFile);
     const hasAnswerContent = createForm.answer.trim().length > 0 || Boolean(answerImageFile);
@@ -116,32 +93,6 @@ export default function TasksAdmin() {
     () => cheatForm.title.trim().length > 0 && (cheatForm.content.trim().length > 0 || Boolean(cheatImageFile)),
     [cheatForm.content, cheatForm.title, cheatImageFile]
   );
-
-  const loadCatalog = async (page = catalogPage) => {
-    setCatalogLoading(true);
-    setCatalogError(null);
-
-    try {
-      const response = await listTasks({
-        number: Number(catalogNumber),
-        type: catalogType,
-        page,
-        pageSize: PAGE_SIZE,
-      });
-      setCatalogItems(response.data.items ?? []);
-      setCatalogTotal(response.data.total ?? 0);
-      setCatalogPage(response.data.page ?? page);
-    } catch {
-      setCatalogError("Не удалось загрузить каталог задач.");
-    } finally {
-      setCatalogLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    void loadCatalog(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [catalogNumber, catalogType]);
 
   const createTask = async () => {
     setPending(true);
@@ -169,9 +120,30 @@ export default function TasksAdmin() {
       setTaskImageFile(null);
       setAnswerImageFile(null);
       setSolutionImageFile(null);
-      void loadCatalog(1);
     } catch {
       setStatus("Ошибка при добавлении задачи.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const handleCreateCheat = async () => {
+    setPending(true);
+    setStatus(null);
+
+    try {
+      await createCheatSheet({
+        number: Number(cheatForm.number),
+        title: cheatForm.title,
+        content: cheatForm.content || null,
+        image: cheatImageFile,
+      });
+
+      setStatus("Шпаргалка успешно добавлена.");
+      setCheatForm((prev) => ({ ...INITIAL_CHEAT_FORM, number: prev.number }));
+      setCheatImageFile(null);
+    } catch {
+      setStatus("Ошибка при добавлении шпаргалки.");
     } finally {
       setPending(false);
     }
@@ -205,7 +177,7 @@ export default function TasksAdmin() {
     <div className="space-y-6">
       <Card>
         <h2 className="text-xl font-semibold mb-2">Добавить задачу вручную</h2>
-        <p className="text-slate-600 mb-6">Выбери номер, подкатегорию и прикрепи изображения файлами.</p>
+        <p className="text-slate-600 mb-6">Каталог задач теперь вынесен из админки в общий раздел «Каталог задач».</p>
 
         <div className="grid sm:grid-cols-2 gap-4 mb-4">
           <label className="space-y-2">
@@ -367,108 +339,6 @@ export default function TasksAdmin() {
         <Button disabled={!canSubmitCheat || pending} onClick={handleCreateCheat}>
           {pending ? "Сохранение..." : "Добавить шпаргалку"}
         </Button>
-      </Card>
-
-      <Card>
-        <h2 className="text-xl font-semibold mb-4">Каталог задач</h2>
-
-        <div className="grid sm:grid-cols-2 gap-4 mb-4">
-          <label className="space-y-2">
-            <span className="text-sm text-slate-500">Фильтр по номеру</span>
-            <select
-              className="input"
-              value={catalogNumber}
-              onChange={(e) => {
-                const nextNumber = e.target.value;
-                setCatalogNumber(nextNumber);
-                setCatalogType(getDefaultTypeForNumber(Number(nextNumber)));
-              }}
-            >
-              {PART_ONE_TASK_CATALOG.map((item) => (
-                <option key={item.number} value={item.number}>
-                  {item.number}. {item.title}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="space-y-2">
-            <span className="text-sm text-slate-500">Фильтр по подкатегории</span>
-            <select className="input" value={catalogType} onChange={(e) => setCatalogType(e.target.value)}>
-              {catalogTypeOptions.map((subtype) => (
-                <option key={subtype.value} value={subtype.value}>
-                  {subtype.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        {catalogLoading && <p className="text-slate-500">Загрузка каталога…</p>}
-        {catalogError && <p className="text-red-500">{catalogError}</p>}
-
-        {!catalogLoading && !catalogItems.length && !catalogError && (
-          <p className="text-slate-500">По выбранным фильтрам задач пока нет.</p>
-        )}
-
-        <div className="space-y-4">
-          {catalogItems.map((task) => (
-            <div key={task.id} className="rounded-xl border border-slate-200 p-4 space-y-3 bg-white">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="text-sm text-slate-500">ID: {task.id}</div>
-                <div className="text-sm text-slate-700 font-medium">
-                  №{task.number} · {getTypeLabel(task.number, task.type)}
-                </div>
-              </div>
-
-              <TaskStatement
-                text={task.condition ?? undefined}
-                imageUrl={task.imageUrl ?? undefined}
-                contentOrder={task.contentOrder ?? "text-first"}
-              />
-
-              {(task.answer || task.answerImageUrl) && (
-                <div className="text-sm text-slate-700">
-                  <span className="font-medium">Ответ:</span> {task.answer ?? "—"}
-                  {task.answerImageUrl && (
-                    <a className="ml-2 text-indigo-600" href={task.answerImageUrl} target="_blank" rel="noreferrer">
-                      Открыть фото ответа
-                    </a>
-                  )}
-                </div>
-              )}
-
-              {(task.solution || task.solutionImageUrl) && (
-                <div className="text-sm text-slate-700">
-                  <span className="font-medium">Решение:</span> {task.solution ?? "—"}
-                  {task.solutionImageUrl && (
-                    <a className="ml-2 text-indigo-600" href={task.solutionImageUrl} target="_blank" rel="noreferrer">
-                      Открыть фото решения
-                    </a>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-5 flex items-center justify-between">
-          <p className="text-sm text-slate-500">
-            Страница {catalogPage} из {totalPages} · Всего задач: {catalogTotal}
-          </p>
-          <div className="flex gap-2">
-            <Button variant="secondary" disabled={catalogPage <= 1 || catalogLoading} onClick={() => void loadCatalog(catalogPage - 1)}>
-              Назад
-            </Button>
-            <Button
-              variant="secondary"
-              disabled={catalogPage >= totalPages || catalogLoading}
-              onClick={() => void loadCatalog(catalogPage + 1)}
-            >
-              Вперёд
-            </Button>
-          </div>
-        </div>
       </Card>
 
       {status && <p className="text-sm text-slate-600">{status}</p>}

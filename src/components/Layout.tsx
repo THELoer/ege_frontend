@@ -17,9 +17,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
           <div className="flex items-center gap-4 text-sm">
             {token && (
-              <Link to="/profile" className="text-indigo-600 hover:text-indigo-700">
-                Профиль
-              </Link>
+              <>
+                <Link to="/catalog" className="text-indigo-600 hover:text-indigo-700">
+                  Каталог задач
+                </Link>
+                <Link to="/profile" className="text-indigo-600 hover:text-indigo-700">
+                  Профиль
+                </Link>
+              </>
             )}
             {role === "admin" && (
               <Link to="/admin/tasks" className="text-indigo-600 hover:text-indigo-700">

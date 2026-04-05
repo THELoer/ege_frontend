@@ -1,4 +1,5 @@
 import { api } from "./client";
+import type { TaskContentOrder } from "../types/Task";
 
 export interface StudyMaterial {
   id: string;
@@ -15,6 +16,27 @@ export interface CheatSheet {
   title: string;
   content?: string;
   imageUrl?: string;
+}
+
+export interface CatalogTaskItem {
+  id: string;
+  number: number;
+  type: string;
+  condition?: string | null;
+  imageUrl?: string | null;
+  contentOrder?: TaskContentOrder | null;
+  answer?: string | null;
+  answerImageUrl?: string | null;
+  solution?: string | null;
+  solutionImageUrl?: string | null;
+  createdAt?: string;
+}
+
+export interface CatalogTaskResponse {
+  items: CatalogTaskItem[];
+  total: number;
+  page: number;
+  pageSize: number;
 }
 
 export const getTrainingMaterials = (number: number) =>
@@ -37,3 +59,10 @@ export const createCheatSheet = (payload: {
 
   return api.post("/admin/cheatsheets", formData);
 };
+
+export const listTaskCatalog = (params: {
+  number?: number;
+  type?: string;
+  page?: number;
+  pageSize?: number;
+}) => api.get<CatalogTaskResponse>("/tasks/catalog", { params });

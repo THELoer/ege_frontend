@@ -12,8 +12,9 @@
   - опционально `condition`, `answer`, `solution`,
   - опционально файлы `taskImage`, `answerImage`, `solutionImage`.
 
-- `GET /api/admin/tasks?number=1&type=planimetry_right_triangle&page=1&pageSize=10`
-  - Ответ:
+### 2) Каталог задач (доступен всем авторизованным)
+- `GET /api/tasks/catalog?number=1&type=planimetry_right_triangle&page=1&pageSize=10`
+- Ожидаемый ответ:
 ```json
 {
   "items": [
@@ -37,40 +38,15 @@
 }
 ```
 
-### 2) Материалы обучения (кнопка «К обучению»)
+### 3) Материалы обучения (кнопка «К обучению»)
 - `GET /api/tasks/:number/materials`
-  - Массив материалов:
-```json
-[
-  {
-    "id": "m1",
-    "number": 1,
-    "title": "Теория",
-    "description": "Коротко по теме",
-    "content": "LaTeX/текст",
-    "imageUrl": "https://..."
-  }
-]
-```
 
-### 3) Шпаргалки
+### 4) Шпаргалки
 - `POST /api/admin/cheatsheets` — `multipart/form-data`:
   - `number`, `title`, опционально `content`, опционально `image`.
 - `GET /api/tasks/:number/cheatsheets`
-  - Массив шпаргалок:
-```json
-[
-  {
-    "id": "c1",
-    "number": 1,
-    "title": "Формулы планиметрии",
-    "content": "...",
-    "imageUrl": "https://..."
-  }
-]
-```
 
-### 4) Статистика ученика (профиль)
+### 5) Статистика ученика (профиль)
 - `GET /api/stats/me`
 ```json
 {
@@ -81,7 +57,9 @@
 }
 ```
 
-### 5) Валидация
+> Если для какого-то номера данных нет, frontend подставляет нули (0 верных, 0 неверных, 0%).
+
+### 6) Валидация
 - Задача: обязательно хотя бы одно из `condition` или `taskImage`.
 - Ответ: обязательно хотя бы одно из `answer` или `answerImage`.
 - Шпаргалка: обязательно `title` и хотя бы одно из `content` или `image`.

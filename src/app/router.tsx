@@ -10,6 +10,8 @@ import AdminLayout from "../pages/admin/AdminLayout";
 import TasksAdmin from "../pages/admin/TasksAdmin";
 import ProtectedRoute from "../components/ProtectedRoute";
 import Profile from "../pages/Profile";
+import Catalog from "../pages/Catalog";
+import TestingMenu from "../pages/TestingMenu";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Home /> },
@@ -20,6 +22,15 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Profile />
+      </ProtectedRoute>
+    ),
+  },
+
+  {
+    path: "/catalog",
+    element: (
+      <ProtectedRoute>
+        <Catalog />
       </ProtectedRoute>
     ),
   },
@@ -53,6 +64,14 @@ export const router = createBrowserRouter([
     element: (
       <ProtectedRoute>
         <Train />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/tasks/:number/testing",
+    element: (
+      <ProtectedRoute>
+        <TestingMenu />
       </ProtectedRoute>
     ),
   },
