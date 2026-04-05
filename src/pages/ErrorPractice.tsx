@@ -5,6 +5,7 @@ import Card from "../components/Card";
 import Button from "../components/Button";
 import TaskStatement from "../components/TaskStatement";
 import { listTaskCatalog, type CatalogTaskItem } from "../api/study";
+import { resolveImageUrl } from "../utils/image";
 
 const PAGE_SIZE = 100;
 
@@ -129,7 +130,7 @@ export default function ErrorPractice() {
                   <p className="font-medium text-slate-800">{currentTask.answer}</p>
                   {currentTask.answerImageUrl && (
                     <img
-                      src={currentTask.answerImageUrl}
+                      src={resolveImageUrl(currentTask.answerImageUrl)}
                       alt="Правильный ответ"
                       className="mt-2 max-h-[320px] w-full rounded-xl border border-slate-200 object-contain bg-white"
                     />
