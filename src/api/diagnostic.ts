@@ -1,7 +1,12 @@
-import axios from "axios";
+import { api } from "./client";
+import type {
+  DiagnosticStartResponse,
+  DiagnosticSubmitPayload,
+  DiagnosticSubmitResponse,
+} from "../types/Task";
 
 export const startDiagnostic = (number: number) =>
-  axios.get(`/api/diagnostic/${number}/start`);
+  api.get<DiagnosticStartResponse>(`/diagnostic/${number}/start`);
 
-export const submitDiagnostic = (data: any) =>
-  axios.post(`/api/diagnostic/submit`, data);
+export const submitDiagnostic = (data: DiagnosticSubmitPayload) =>
+  api.post<DiagnosticSubmitResponse>(`/diagnostic/submit`, data);

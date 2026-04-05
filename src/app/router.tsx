@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import TaskPage from "../pages/TaskPage";
@@ -62,6 +62,9 @@ export const router = createBrowserRouter([
         <AdminLayout />
       </ProtectedRoute>
     ),
-    children: [{ path: "tasks", element: <TasksAdmin /> }],
+    children: [
+      { index: true, element: <Navigate to="tasks" replace /> },
+      { path: "tasks", element: <TasksAdmin /> },
+    ],
   },
 ]);
