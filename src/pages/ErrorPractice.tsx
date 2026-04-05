@@ -31,7 +31,7 @@ export default function ErrorPractice() {
   useEffect(() => {
     listTaskCatalog({ number: taskNumber, page: 1, pageSize: PAGE_SIZE })
       .then((res) => {
-        const items = (res.data.items ?? []).filter((item) => item.answer?.trim());
+        const items = (res.data.items ?? []).filter((item) => item.answer?.trim() || item.answerImageUrl?.trim());
         setTasks(items);
         setCurrentIndex(0);
         setUserAnswer("");
@@ -127,7 +127,7 @@ export default function ErrorPractice() {
 
                 <div>
                   <p className="text-sm text-slate-500 mb-1">Правильный ответ</p>
-                  <p className="font-medium text-slate-800">{currentTask.answer}</p>
+                  <p className="font-medium text-slate-800">{currentTask.answer || "Ответ доступен в изображении ниже."}</p>
                   {currentTask.answerImageUrl && (
                     <img
                       src={resolveImageUrl(currentTask.answerImageUrl)}
