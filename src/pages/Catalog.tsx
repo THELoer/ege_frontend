@@ -22,6 +22,7 @@ export default function Catalog() {
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<CatalogTaskItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [openedAnswers, setOpenedAnswers] = useState<Record<string, boolean>>({});
 
   const selectedFilter = useMemo(() => getCatalogItemByNumber(Number(number)), [number]);
   const typeOptions = useMemo(
@@ -47,6 +48,7 @@ export default function Catalog() {
       setItems(response.data.items ?? []);
       setTotal(response.data.total ?? 0);
       setPage(response.data.page ?? nextPage);
+      setOpenedAnswers({});
     } catch {
       setError("Не удалось загрузить каталог задач.");
     } finally {
@@ -121,6 +123,31 @@ export default function Catalog() {
                   imageUrl={task.imageUrl ?? undefined}
                   contentOrder={task.contentOrder ?? "text-first"}
                 />
+
+                <div className="pt-1">
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      setOpenedAnswers((prev) => ({
+                        ...prev,
+                        [task.id]: !prev[task.id],
+                      }))
+                    }
+                  >
+                    {openedAnswers[task.id] ? "Скрыть ответ" : "Показать ответ"}
+                  </Button>
+                </div>
+
+                {openedAnswers[task.id] && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+                    <p className="text-sm text-slate-500">Ответ</p>
+                    <TaskStatement
+                      text={task.answer ?? "Текстового ответа нет."}
+                      imageUrl={task.answerImageUrl ?? undefined}
+                      contentOrder="text-first"
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
