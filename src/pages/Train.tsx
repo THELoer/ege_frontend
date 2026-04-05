@@ -1,58 +1,89 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
-import Button from "../components/Button";
-import Formula from "../components/Formula";
-
-const THEORY = {
-  logarithmic: {
-    title: "Логарифмические уравнения",
-    theory: "log_a x = b ⇔ x = a^b",
-    example: "log_2(x - 1) = 3",
-    solution: "x - 1 = 2^3 ⇒ x = 9",
-  },
-};
-
-type TheoryKey = keyof typeof THEORY;
+import TaskStatement from "../components/TaskStatement";
+import { getTrainingMaterials, listCheatSheets, type CheatSheet, type StudyMaterial } from "../api/study";
 
 export default function Train() {
-  const [type, setType] = useState<TheoryKey>("logarithmic");
-  const t = THEORY[type];
+  const { number } = useParams();
+  const taskNumber = Number(number);
+
+  const [materials, setMaterials] = useState<StudyMaterial[]>([]);
+  const [cheatSheets, setCheatSheets] = useState<CheatSheet[]>([]);
+  const [openCheatId, setOpenCheatId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    Promise.all([getTrainingMaterials(taskNumber), listCheatSheets(taskNumber)])
+      .then(([materialsRes, cheatsRes]) => {
+        setMaterials(materialsRes.data ?? []);
+        setCheatSheets(cheatsRes.data ?? []);
+        setError(null);
+      })
+      .catch(() => setError("Не удалось загрузить материалы обучения. Проверь backend-эндпоинты."))
+      .finally(() => setLoaded(true));
+  }, [taskNumber]);
 
   return (
     <Layout>
       <div className="space-y-8">
-        <h1 className="text-3xl font-bold">
-          Обучение
-        </h1>
-
-        <div className="flex gap-4">
-          <Button onClick={() => setType("logarithmic")}>
-            Логарифмы
-          </Button>
-        </div>
+        <h1 className="text-3xl font-bold">Обучение по заданию №{number}</h1>
 
         <Card>
-          <h2 className="text-xl font-semibold mb-4">
-            {t.title}
-          </h2>
+          <h2 className="text-xl font-semibold mb-3">Материалы от backend</h2>
+          {!loaded && <p className="text-slate-500">Загрузка материалов…</p>}
+          {error && <p className="text-red-500">{error}</p>}
 
-          <Formula value={t.theory} />
+          {loaded && !error && materials.length === 0 && (
+            <p className="text-slate-500">Пока нет материалов для этого задания.</p>
+          )}
 
-          <div className="mt-6">
-            <p className="font-semibold mb-2">Пример:</p>
-            <Formula value={t.example} />
-          </div>
-
-          <div className="mt-6">
-            <p className="font-semibold mb-2">Решение:</p>
-            <Formula value={t.solution} />
-          </div>
+          {loaded && !error && materials.length > 0 && (
+            <div className="space-y-4">
+              {materials.map((material) => (
+                <div key={material.id} className="rounded-xl border border-slate-200 p-4 bg-white">
+                  <h3 className="font-semibold text-lg">{material.title}</h3>
+                  {material.description && <p className="text-slate-600 mt-1">{material.description}</p>}
+                  <div className="mt-3">
+                    <TaskStatement text={material.content} imageUrl={material.imageUrl} contentOrder="text-first" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
-        <Button variant="secondary">
-          Решить задачу
-        </Button>
+        <Card>
+          <h2 className="text-xl font-semibold mb-3">Шпаргалки</h2>
+          {loaded && !error && cheatSheets.length === 0 && (
+            <p className="text-slate-500">Для этого задания пока нет шпаргалок.</p>
+          )}
+
+          <div className="space-y-3">
+            {cheatSheets.map((sheet) => {
+              const isOpen = openCheatId === sheet.id;
+              return (
+                <div key={sheet.id} className="rounded-xl border border-slate-200 overflow-hidden bg-white">
+                  <button
+                    type="button"
+                    className="w-full text-left px-4 py-3 font-medium hover:bg-slate-50"
+                    onClick={() => setOpenCheatId(isOpen ? null : sheet.id)}
+                  >
+                    {sheet.title}
+                  </button>
+
+                  {isOpen && (
+                    <div className="px-4 pb-4">
+                      <TaskStatement text={sheet.content} imageUrl={sheet.imageUrl} contentOrder="text-first" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </Card>
       </div>
     </Layout>
   );
