@@ -17,6 +17,11 @@ function normalizeAnswer(value: string | null | undefined) {
     .replace(/\s+/g, "");
 }
 
+function getConditionText(task: CatalogTaskItem) {
+  const extendedTask = task as CatalogTaskItem & { conditionText?: string | null; text?: string | null };
+  return task.condition ?? extendedTask.conditionText ?? extendedTask.text ?? undefined;
+}
+
 export default function ErrorPractice() {
   const { number } = useParams();
   const taskNumber = Number(number);
@@ -95,7 +100,7 @@ export default function ErrorPractice() {
             </div>
 
             <TaskStatement
-              text={currentTask.condition ?? undefined}
+              text={getConditionText(currentTask)}
               imageUrl={currentTask.imageUrl ?? undefined}
               contentOrder={currentTask.contentOrder ?? "text-first"}
             />

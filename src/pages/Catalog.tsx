@@ -14,6 +14,11 @@ const getTypeLabel = (number: number, type: string) => {
   return catalogItem.subtypes?.find((sub) => sub.value === type)?.label ?? type;
 };
 
+const getConditionText = (task: CatalogTaskItem) => {
+  const extendedTask = task as CatalogTaskItem & { conditionText?: string | null; text?: string | null };
+  return task.condition ?? extendedTask.conditionText ?? extendedTask.text ?? undefined;
+};
+
 export default function Catalog() {
   const [number, setNumber] = useState(INITIAL_NUMBER);
   const [type, setType] = useState(getDefaultTypeForNumber(Number(INITIAL_NUMBER)));
@@ -119,7 +124,7 @@ export default function Catalog() {
                 </div>
 
                 <TaskStatement
-                  text={task.condition ?? undefined}
+                  text={getConditionText(task)}
                   imageUrl={task.imageUrl ?? undefined}
                   contentOrder={task.contentOrder ?? "text-first"}
                 />

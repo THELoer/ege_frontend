@@ -8,7 +8,15 @@ interface TaskStatementProps {
 }
 
 function looksLikeMath(text: string) {
-  return /\\|\^|_|\{|\}|\frac|\sqrt|log|\sin|\cos|\tan/.test(text);
+  const hasLatexCommand = /\\[a-zA-Z]+/.test(text);
+  const hasMathTokens = /\^|_|\{|\}|\frac|\sqrt|log|\sin|\cos|\tan/.test(text);
+  const hasCyrillic = /[А-Яа-яЁё]/.test(text);
+
+  if (hasCyrillic && !hasLatexCommand) {
+    return false;
+  }
+
+  return hasLatexCommand || hasMathTokens;
 }
 
 function TextBlock({ text }: { text: string }) {
