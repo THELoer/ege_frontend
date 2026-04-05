@@ -27,6 +27,10 @@ export default function TaskPage() {
           <Link to={`/tasks/${number}/exam`}>
             <Button variant="secondary">Режим экзамена</Button>
           </Link>
+
+          <Link to={`/tasks/${number}/exam`}>
+            <Button variant="secondary">Режим экзамена</Button>
+          </Link>
         </div>
       </Card>
     </Layout>
