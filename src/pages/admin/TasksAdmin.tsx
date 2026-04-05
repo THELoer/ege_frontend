@@ -4,6 +4,7 @@ import Button from "../../components/Button";
 import TaskStatement from "../../components/TaskStatement";
 import type { TaskContentOrder } from "../../types/Task";
 import { createTask as createTaskApi, listTasks, type AdminTaskListItem } from "../../api/admin";
+import { createCheatSheet } from "../../api/study";
 import {
   PART_ONE_TASK_CATALOG,
   getCatalogItemByNumber,
@@ -19,6 +20,12 @@ interface CreateTaskForm {
   solution: string;
 }
 
+interface CheatSheetForm {
+  number: string;
+  title: string;
+  content: string;
+}
+
 const INITIAL_NUMBER = String(PART_ONE_TASK_CATALOG[0]?.number ?? 1);
 const PAGE_SIZE = 10;
 
@@ -31,6 +38,12 @@ const INITIAL_CREATE_FORM: CreateTaskForm = {
   solution: "",
 };
 
+const INITIAL_CHEAT_FORM: CheatSheetForm = {
+  number: INITIAL_NUMBER,
+  title: "",
+  content: "",
+};
+
 const getTypeLabel = (number: number, type: string) => {
   const catalogItem = getCatalogItemByNumber(number);
   return catalogItem.subtypes?.find((sub) => sub.value === type)?.label ?? type;
@@ -41,6 +54,10 @@ export default function TasksAdmin() {
   const [taskImageFile, setTaskImageFile] = useState<File | null>(null);
   const [answerImageFile, setAnswerImageFile] = useState<File | null>(null);
   const [solutionImageFile, setSolutionImageFile] = useState<File | null>(null);
+
+  const [cheatForm, setCheatForm] = useState<CheatSheetForm>(INITIAL_CHEAT_FORM);
+  const [cheatImageFile, setCheatImageFile] = useState<File | null>(null);
+
   const [status, setStatus] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -94,6 +111,11 @@ export default function TasksAdmin() {
     const hasAnswerContent = createForm.answer.trim().length > 0 || Boolean(answerImageFile);
     return hasTaskContent && hasAnswerContent;
   }, [answerImageFile, createForm.answer, createForm.text, taskImageFile]);
+
+  const canSubmitCheat = useMemo(
+    () => cheatForm.title.trim().length > 0 && (cheatForm.content.trim().length > 0 || Boolean(cheatImageFile)),
+    [cheatForm.content, cheatForm.title, cheatImageFile]
+  );
 
   const loadCatalog = async (page = catalogPage) => {
     setCatalogLoading(true);
@@ -150,6 +172,28 @@ export default function TasksAdmin() {
       void loadCatalog(1);
     } catch {
       setStatus("Ошибка при добавлении задачи.");
+    } finally {
+      setPending(false);
+    }
+  };
+
+  const handleCreateCheat = async () => {
+    setPending(true);
+    setStatus(null);
+
+    try {
+      await createCheatSheet({
+        number: Number(cheatForm.number),
+        title: cheatForm.title,
+        content: cheatForm.content || null,
+        image: cheatImageFile,
+      });
+
+      setStatus("Шпаргалка успешно добавлена.");
+      setCheatForm((prev) => ({ ...INITIAL_CHEAT_FORM, number: prev.number }));
+      setCheatImageFile(null);
+    } catch {
+      setStatus("Ошибка при добавлении шпаргалки.");
     } finally {
       setPending(false);
     }
@@ -274,6 +318,55 @@ export default function TasksAdmin() {
       <Card>
         <h3 className="font-semibold mb-3">Превью отображения задачи</h3>
         <TaskStatement text={createForm.text} imageUrl={taskImagePreviewUrl} contentOrder={createForm.contentOrder} />
+      </Card>
+
+      <Card>
+        <h2 className="text-xl font-semibold mb-2">Добавить шпаргалку</h2>
+        <p className="text-slate-600 mb-6">Шпаргалка привязывается только к номеру задания, без подтипа.</p>
+
+        <div className="grid sm:grid-cols-2 gap-4 mb-4">
+          <label className="space-y-2">
+            <span className="text-sm text-slate-500">Номер задания</span>
+            <select
+              className="input"
+              value={cheatForm.number}
+              onChange={(e) => setCheatForm((v) => ({ ...v, number: e.target.value }))}
+            >
+              {PART_ONE_TASK_CATALOG.map((item) => (
+                <option key={item.number} value={item.number}>
+                  {item.number}. {item.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm text-slate-500">Название шпаргалки</span>
+            <input
+              className="input"
+              value={cheatForm.title}
+              onChange={(e) => setCheatForm((v) => ({ ...v, title: e.target.value }))}
+            />
+          </label>
+        </div>
+
+        <label className="space-y-2 block mb-4">
+          <span className="text-sm text-slate-500">Текст шпаргалки</span>
+          <textarea
+            className="input min-h-24"
+            value={cheatForm.content}
+            onChange={(e) => setCheatForm((v) => ({ ...v, content: e.target.value }))}
+          />
+        </label>
+
+        <label className="space-y-2 block mb-6">
+          <span className="text-sm text-slate-500">Картинка шпаргалки (опционально)</span>
+          <input type="file" accept="image/*" onChange={(e) => setCheatImageFile(e.target.files?.[0] ?? null)} />
+        </label>
+
+        <Button disabled={!canSubmitCheat || pending} onClick={handleCreateCheat}>
+          {pending ? "Сохранение..." : "Добавить шпаргалку"}
+        </Button>
       </Card>
 
       <Card>

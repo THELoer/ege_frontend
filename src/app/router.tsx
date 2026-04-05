@@ -9,10 +9,20 @@ import Exam from "../pages/Exam";
 import AdminLayout from "../pages/admin/AdminLayout";
 import TasksAdmin from "../pages/admin/TasksAdmin";
 import ProtectedRoute from "../components/ProtectedRoute";
+import Profile from "../pages/Profile";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Home /> },
   { path: "/login", element: <Login /> },
+
+  {
+    path: "/profile",
+    element: (
+      <ProtectedRoute>
+        <Profile />
+      </ProtectedRoute>
+    ),
+  },
 
   {
     path: "/tasks/:number",

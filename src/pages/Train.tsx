@@ -1,55 +1,30 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import Card from "../components/Card";
-import Button from "../components/Button";
-import Formula from "../components/Formula";
-import type { TaskType, DiagnosticSubmitResponse } from "../types/Task";
-
-const THEORY: Record<
-  TaskType,
-  {
-    title: string;
-    theory: string;
-    example: string;
-    solution: string;
-  }
-> = {
-  logarithmic: {
-    title: "Логарифмические уравнения",
-    theory: "\\log_a x = b \\Leftrightarrow x = a^b",
-    example: "\\log_2(x - 1) = 3",
-    solution: "x - 1 = 2^3 \\Rightarrow x = 9",
-  },
-  trigonometric: {
-    title: "Тригонометрические уравнения",
-    theory: "\\sin x = a \\Rightarrow x = (-1)^k\\arcsin(a)+\\pi k",
-    example: "\\sin x = \\frac{1}{2}",
-    solution: "x = \\frac{\\pi}{6} + 2\\pi k \\; \\text{или} \\; x = \\frac{5\\pi}{6} + 2\\pi k",
-  },
-  exponential: {
-    title: "Показательные уравнения",
-    theory: "a^{f(x)} = a^{g(x)} \\Rightarrow f(x)=g(x), \\; a>0, a \\neq 1",
-    example: "3^{2x-1}=3^5",
-    solution: "2x-1=5 \\Rightarrow x=3",
-  },
-  rational: {
-    title: "Рациональные уравнения",
-    theory: "\\frac{P(x)}{Q(x)}=0 \\Rightarrow P(x)=0,\\; Q(x)\\neq 0",
-    example: "\\frac{x^2-9}{x-3}=0",
-    solution: "x^2-9=0 \\Rightarrow x=\\pm 3, \\; x\\neq 3 \\Rightarrow x=-3",
-  },
-};
+import TaskStatement from "../components/TaskStatement";
+import { getTrainingMaterials, listCheatSheets, type CheatSheet, type StudyMaterial } from "../api/study";
 
 export default function Train() {
   const { number } = useParams();
-  const [type, setType] = useState<TaskType>("logarithmic");
+  const taskNumber = Number(number);
 
-  const resultRaw = localStorage.getItem(`diagnostic-result-${number}`);
-  const result = resultRaw ? (JSON.parse(resultRaw) as DiagnosticSubmitResponse) : null;
+  const [materials, setMaterials] = useState<StudyMaterial[]>([]);
+  const [cheatSheets, setCheatSheets] = useState<CheatSheet[]>([]);
+  const [openCheatId, setOpenCheatId] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const recommended = useMemo(() => result?.weakTypes ?? [], [result]);
-  const current = THEORY[type];
+  useEffect(() => {
+    Promise.all([getTrainingMaterials(taskNumber), listCheatSheets(taskNumber)])
+      .then(([materialsRes, cheatsRes]) => {
+        setMaterials(materialsRes.data ?? []);
+        setCheatSheets(cheatsRes.data ?? []);
+        setError(null);
+      })
+      .catch(() => setError("Не удалось загрузить материалы обучения. Проверь backend-эндпоинты."))
+      .finally(() => setLoaded(true));
+  }, [taskNumber]);
 
   return (
     <Layout>
@@ -57,38 +32,58 @@ export default function Train() {
         <h1 className="text-3xl font-bold">Обучение по заданию №{number}</h1>
 
         <Card>
-          <h2 className="text-xl font-semibold mb-2">Персональные рекомендации</h2>
-          <p className="text-slate-600">
-            {recommended.length > 0
-              ? `Начните с тем: ${recommended.join(", ")}.`
-              : "Сначала пройдите диагностику, чтобы получить персональный план."}
-          </p>
-        </Card>
+          <h2 className="text-xl font-semibold mb-3">Материалы от backend</h2>
+          {!loaded && <p className="text-slate-500">Загрузка материалов…</p>}
+          {error && <p className="text-red-500">{error}</p>}
 
-        <div className="flex gap-3 flex-wrap">
-          {(Object.keys(THEORY) as TaskType[]).map((key) => (
-            <button key={key} className={`chip ${type === key ? "chip-active" : ""}`} onClick={() => setType(key)}>
-              {THEORY[key].title}
-            </button>
-          ))}
-        </div>
+          {loaded && !error && materials.length === 0 && (
+            <p className="text-slate-500">Пока нет материалов для этого задания.</p>
+          )}
+
+          {loaded && !error && materials.length > 0 && (
+            <div className="space-y-4">
+              {materials.map((material) => (
+                <div key={material.id} className="rounded-xl border border-slate-200 p-4 bg-white">
+                  <h3 className="font-semibold text-lg">{material.title}</h3>
+                  {material.description && <p className="text-slate-600 mt-1">{material.description}</p>}
+                  <div className="mt-3">
+                    <TaskStatement text={material.content} imageUrl={material.imageUrl} contentOrder="text-first" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
 
         <Card>
-          <h2 className="text-xl font-semibold mb-4">{current.title}</h2>
-          <Formula value={current.theory} />
+          <h2 className="text-xl font-semibold mb-3">Шпаргалки</h2>
+          {loaded && !error && cheatSheets.length === 0 && (
+            <p className="text-slate-500">Для этого задания пока нет шпаргалок.</p>
+          )}
 
-          <div className="mt-6">
-            <p className="font-semibold mb-2">Пример:</p>
-            <Formula value={current.example} />
-          </div>
+          <div className="space-y-3">
+            {cheatSheets.map((sheet) => {
+              const isOpen = openCheatId === sheet.id;
+              return (
+                <div key={sheet.id} className="rounded-xl border border-slate-200 overflow-hidden bg-white">
+                  <button
+                    type="button"
+                    className="w-full text-left px-4 py-3 font-medium hover:bg-slate-50"
+                    onClick={() => setOpenCheatId(isOpen ? null : sheet.id)}
+                  >
+                    {sheet.title}
+                  </button>
 
-          <div className="mt-6">
-            <p className="font-semibold mb-2">Решение:</p>
-            <Formula value={current.solution} />
+                  {isOpen && (
+                    <div className="px-4 pb-4">
+                      <TaskStatement text={sheet.content} imageUrl={sheet.imageUrl} contentOrder="text-first" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </Card>
-
-        <Button variant="secondary">Открыть тренировочный набор по теме</Button>
       </div>
     </Layout>
   );

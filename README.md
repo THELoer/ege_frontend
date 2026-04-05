@@ -5,16 +5,15 @@
 2. Убедитесь, что `VITE_API_URL` указывает на ваш backend (по умолчанию `http://localhost:8080/api`).
 3. Запустите фронтенд: `npm run dev`.
 
-## Что реализовать в backend для текущей админ-панели
-### 1) Создание задачи
+## Что реализовать в backend
+### 1) Задачи (админ)
 - `POST /api/admin/tasks` — `multipart/form-data`:
   - `number`, `type`, `contentOrder`,
   - опционально `condition`, `answer`, `solution`,
   - опционально файлы `taskImage`, `answerImage`, `solutionImage`.
 
-### 2) Простой каталог задач (новое)
 - `GET /api/admin/tasks?number=1&type=planimetry_right_triangle&page=1&pageSize=10`
-- Ожидаемый ответ:
+  - Ответ:
 ```json
 {
   "items": [
@@ -38,20 +37,52 @@
 }
 ```
 
-### 3) Минимальная схема БД
-- `tasks`
-  - `id` (uuid/pk), `number` (smallint), `type` (varchar), `condition_text` (text, nullable),
-  - `task_image_path` (text, nullable), `content_order` (varchar),
-  - `answer_text` (text, nullable), `answer_image_path` (text, nullable),
-  - `solution_text` (text, nullable), `solution_image_path` (text, nullable),
-  - `created_by` (fk users), `created_at`, `updated_at`.
+### 2) Материалы обучения (кнопка «К обучению»)
+- `GET /api/tasks/:number/materials`
+  - Массив материалов:
+```json
+[
+  {
+    "id": "m1",
+    "number": 1,
+    "title": "Теория",
+    "description": "Коротко по теме",
+    "content": "LaTeX/текст",
+    "imageUrl": "https://..."
+  }
+]
+```
 
-### 4) Хранение файлов
-- Сохраняйте картинки в локальное хранилище (`uploads/tasks/...`) или S3/MinIO.
-- В БД храните **только путь/ключ**, не бинарные данные.
-- Отдавайте публичный URL через backend (например `/media/...`).
+### 3) Шпаргалки
+- `POST /api/admin/cheatsheets` — `multipart/form-data`:
+  - `number`, `title`, опционально `content`, опционально `image`.
+- `GET /api/tasks/:number/cheatsheets`
+  - Массив шпаргалок:
+```json
+[
+  {
+    "id": "c1",
+    "number": 1,
+    "title": "Формулы планиметрии",
+    "content": "...",
+    "imageUrl": "https://..."
+  }
+]
+```
+
+### 4) Статистика ученика (профиль)
+- `GET /api/stats/me`
+```json
+{
+  "tasks": [
+    { "taskNumber": 1, "correct": 16, "incorrect": 4 },
+    { "taskNumber": 2, "correct": 7, "incorrect": 9 }
+  ]
+}
+```
 
 ### 5) Валидация
 - Задача: обязательно хотя бы одно из `condition` или `taskImage`.
 - Ответ: обязательно хотя бы одно из `answer` или `answerImage`.
-- `number` только 1..12, `type` — непустая строка под выбранную подкатегорию.
+- Шпаргалка: обязательно `title` и хотя бы одно из `content` или `image`.
+- `number` только 1..12.
