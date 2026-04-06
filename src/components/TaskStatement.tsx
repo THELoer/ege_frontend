@@ -1,4 +1,5 @@
 import Formula from "./Formula";
+import { resolveImageUrl } from "../utils/image";
 
 interface TaskStatementProps {
   text?: string;
@@ -7,7 +8,15 @@ interface TaskStatementProps {
 }
 
 function looksLikeMath(text: string) {
-  return /\\|\^|_|\{|\}|\frac|\sqrt|log|\sin|\cos|\tan/.test(text);
+  const hasLatexCommand = /\\[a-zA-Z]+/.test(text);
+  const hasMathTokens = /\^|_|\{|\}|\frac|\sqrt|log|\sin|\cos|\tan/.test(text);
+  const hasCyrillic = /[А-Яа-яЁё]/.test(text);
+
+  if (hasCyrillic && !hasLatexCommand) {
+    return false;
+  }
+
+  return hasLatexCommand || hasMathTokens;
 }
 
 function TextBlock({ text }: { text: string }) {
@@ -23,18 +32,21 @@ export default function TaskStatement({
   imageUrl,
   contentOrder = "text-first",
 }: TaskStatementProps) {
-  const hasText = Boolean(text?.trim());
-  const hasImage = Boolean(imageUrl?.trim());
+  const normalizedText = text?.trim() ?? "";
+  const isPlaceholderText = /^(условие|условие задачи)$/i.test(normalizedText);
+  const hasText = Boolean(normalizedText) && !isPlaceholderText;
+  const resolvedImageUrl = resolveImageUrl(imageUrl);
+  const hasImage = Boolean(resolvedImageUrl);
 
   if (!hasText && !hasImage) {
-    return <p className="text-slate-500">Условие задачи отсутствует.</p>;
+    return <p className="text-slate-500">Условие не предоставлено.</p>;
   }
 
   const content = {
-    text: hasText ? <TextBlock text={text!} /> : null,
+    text: hasText ? <TextBlock text={normalizedText} /> : null,
     image: hasImage ? (
       <img
-        src={imageUrl}
+        src={resolvedImageUrl}
         alt="Условие задачи"
         className="max-h-[460px] w-full rounded-xl border border-slate-200 object-contain bg-white"
       />

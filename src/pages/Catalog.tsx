@@ -14,6 +14,11 @@ const getTypeLabel = (number: number, type: string) => {
   return catalogItem.subtypes?.find((sub) => sub.value === type)?.label ?? type;
 };
 
+const getConditionText = (task: CatalogTaskItem) => {
+  const extendedTask = task as CatalogTaskItem & { conditionText?: string | null; text?: string | null };
+  return task.condition ?? extendedTask.conditionText ?? extendedTask.text ?? undefined;
+};
+
 export default function Catalog() {
   const [number, setNumber] = useState(INITIAL_NUMBER);
   const [type, setType] = useState(getDefaultTypeForNumber(Number(INITIAL_NUMBER)));
@@ -22,6 +27,7 @@ export default function Catalog() {
   const [error, setError] = useState<string | null>(null);
   const [items, setItems] = useState<CatalogTaskItem[]>([]);
   const [total, setTotal] = useState(0);
+  const [openedAnswers, setOpenedAnswers] = useState<Record<string, boolean>>({});
 
   const selectedFilter = useMemo(() => getCatalogItemByNumber(Number(number)), [number]);
   const typeOptions = useMemo(
@@ -47,6 +53,7 @@ export default function Catalog() {
       setItems(response.data.items ?? []);
       setTotal(response.data.total ?? 0);
       setPage(response.data.page ?? nextPage);
+      setOpenedAnswers({});
     } catch {
       setError("Не удалось загрузить каталог задач.");
     } finally {
@@ -117,10 +124,42 @@ export default function Catalog() {
                 </div>
 
                 <TaskStatement
-                  text={task.condition ?? undefined}
+                  text={getConditionText(task)}
                   imageUrl={task.imageUrl ?? undefined}
                   contentOrder={task.contentOrder ?? "text-first"}
                 />
+
+                <div className="pt-1">
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      setOpenedAnswers((prev) => ({
+                        ...prev,
+                        [task.id]: !prev[task.id],
+                      }))
+                    }
+                  >
+                    {openedAnswers[task.id] ? "Скрыть ответ" : "Показать ответ"}
+                  </Button>
+                </div>
+
+                {openedAnswers[task.id] && (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-2">
+                    <p className="text-sm text-slate-500">Ответ</p>
+                    <TaskStatement
+                      text={task.answer ?? "Текстового ответа нет."}
+                      imageUrl={task.answerImageUrl ?? undefined}
+                      contentOrder="text-first"
+                    />
+
+                    <p className="text-sm text-slate-500 pt-2">Решение</p>
+                    <TaskStatement
+                      text={task.solution ?? "Решение не предоставлено."}
+                      imageUrl={task.solutionImageUrl ?? undefined}
+                      contentOrder="text-first"
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
