@@ -18,8 +18,30 @@ function normalizeAnswer(value: string | null | undefined) {
 }
 
 function getConditionText(task: CatalogTaskItem) {
-  const extendedTask = task as CatalogTaskItem & { conditionText?: string | null; text?: string | null };
-  return task.condition ?? extendedTask.conditionText ?? extendedTask.text ?? undefined;
+  const extendedTask = task as CatalogTaskItem & {
+    conditionText?: string | null;
+    text?: string | null;
+    statement?: string | null;
+    question?: string | null;
+    description?: string | null;
+  };
+
+  const candidates = [
+    task.condition,
+    extendedTask.conditionText,
+    extendedTask.text,
+    extendedTask.statement,
+    extendedTask.question,
+    extendedTask.description,
+  ];
+
+  const meaningfulText = candidates.find((value) => {
+    const normalized = value?.trim().toLowerCase();
+    if (!normalized) return false;
+    return normalized !== "условие" && normalized !== "условие задачи";
+  });
+
+  return meaningfulText?.trim() ?? task.condition?.trim() ?? undefined;
 }
 
 export default function ErrorPractice() {

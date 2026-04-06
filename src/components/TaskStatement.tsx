@@ -33,8 +33,7 @@ export default function TaskStatement({
   contentOrder = "text-first",
 }: TaskStatementProps) {
   const normalizedText = text?.trim() ?? "";
-  const isPlaceholderText = /^(условие|условие задачи)$/i.test(normalizedText);
-  const hasText = Boolean(normalizedText) && !isPlaceholderText;
+  const hasText = Boolean(normalizedText);
   const resolvedImageUrl = resolveImageUrl(imageUrl);
   const hasImage = Boolean(resolvedImageUrl);
 
