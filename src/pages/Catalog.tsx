@@ -151,6 +151,13 @@ export default function Catalog() {
                       imageUrl={task.answerImageUrl ?? undefined}
                       contentOrder="text-first"
                     />
+
+                    <p className="text-sm text-slate-500 pt-2">Решение</p>
+                    <TaskStatement
+                      text={task.solution ?? "Решение не предоставлено."}
+                      imageUrl={task.solutionImageUrl ?? undefined}
+                      contentOrder="text-first"
+                    />
                   </div>
                 )}
               </div>

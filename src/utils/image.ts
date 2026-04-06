@@ -27,5 +27,9 @@ export function resolveImageUrl(value?: string | null) {
     return `${backendOrigin}${imageRef}`;
   }
 
+  if (/[А-Яа-яЁё]/.test(imageRef) || /\s/.test(imageRef)) {
+    return "";
+  }
+
   return `${backendOrigin}/images/${imageRef}`;
 }

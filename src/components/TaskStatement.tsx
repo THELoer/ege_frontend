@@ -32,16 +32,18 @@ export default function TaskStatement({
   imageUrl,
   contentOrder = "text-first",
 }: TaskStatementProps) {
-  const hasText = Boolean(text?.trim());
+  const normalizedText = text?.trim() ?? "";
+  const isPlaceholderText = /^(условие|условие задачи)$/i.test(normalizedText);
+  const hasText = Boolean(normalizedText) && !isPlaceholderText;
   const resolvedImageUrl = resolveImageUrl(imageUrl);
   const hasImage = Boolean(resolvedImageUrl);
 
   if (!hasText && !hasImage) {
-    return <p className="text-slate-500">Условие задачи отсутствует.</p>;
+    return <p className="text-slate-500">Условие не предоставлено.</p>;
   }
 
   const content = {
-    text: hasText ? <TextBlock text={text!} /> : null,
+    text: hasText ? <TextBlock text={normalizedText} /> : null,
     image: hasImage ? (
       <img
         src={resolvedImageUrl}
